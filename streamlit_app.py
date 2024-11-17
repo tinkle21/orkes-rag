@@ -2,7 +2,7 @@ import os
 import streamlit as st
 import requests
 
-st.title("AshBOT- News Context Search Using Orkes")
+st.title("AshBOT- Financial News Search")
 
 query = st.text_input("Enter your search query:")
 
