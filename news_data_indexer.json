@@ -1,0 +1,132 @@
+{
+  "createTime": 1731453945284,
+  "updateTime": 1732155135350,
+  "name": "news_data_indexer",
+  "description": "indexing and chunking news",
+  "version": 1,
+  "tasks": [
+    {
+      "name": "looper",
+      "taskReferenceName": "looper_ref",
+      "inputParameters": {
+        "loops": 2
+      },
+      "type": "DO_WHILE",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopCondition": "(function () {\r\n  if ($.looper_ref['iteration'] < $.loops) {\r\n    return true;\r\n  }\r\n  return false;\r\n})();",
+      "loopOver": [
+        {
+          "name": "get-news",
+          "taskReferenceName": "get-news_ref",
+          "inputParameters": {
+            "uri": "https://financialmodelingprep.com/api/v3/fmp/articles?page=${looper_ref.output.iteration}&size=5&apikey=WlML9IVb0Awxp34XXFev5H5DKyKTOdJ5",
+            "method": "GET",
+            "accept": "application/json",
+            "contentType": "application/json",
+            "encode": true
+          },
+          "type": "HTTP",
+          "decisionCases": {},
+          "defaultCase": [],
+          "forkTasks": [],
+          "startDelay": 0,
+          "joinOn": [],
+          "optional": false,
+          "defaultExclusiveJoinTask": [],
+          "asyncComplete": false,
+          "loopOver": [],
+          "onStateChange": {},
+          "permissive": false
+        },
+        {
+          "name": "transform-to-dynamic",
+          "taskReferenceName": "transform-to-dynamic_ref",
+          "inputParameters": {
+            "expression": "const sanitise = (input) => input\n .replace(/<[^>]*>?/gm, '')\n .replace(/\\n/g, '')\n .substr(0, 1535);\n\nconsole.log($.data);\n(() => $.data.map((entry) => ({\n  \"embeddingModelProvider\": $.modelProvider,\n  \"embeddingModel\": $.model,\n  \"vectorDB\": $.vectorDB,\n  \"index\": $.index,\n  \"namespace\": $.index,\n  \"text\": sanitise(entry.content),\n  \"docId\" : entry.title.replace(/[^a-zA-Z0-9]/g, '')\n  })))();",
+            "evaluatorType": "graaljs",
+            "data": "${get-news_ref.output.response.body.content}",
+            "vectorDB": "pinecone",
+            "index": "news-small",
+            "modelProvider": "openai",
+            "model": "text-embedding-3-small"
+          },
+          "type": "INLINE",
+          "decisionCases": {},
+          "defaultCase": [],
+          "forkTasks": [],
+          "startDelay": 0,
+          "joinOn": [],
+          "optional": false,
+          "defaultExclusiveJoinTask": [],
+          "asyncComplete": false,
+          "loopOver": [],
+          "onStateChange": {},
+          "permissive": false
+        },
+        {
+          "name": "dynamic_index",
+          "taskReferenceName": "dynamic_index_ref",
+          "inputParameters": {
+            "forkTaskName": "LLM_INDEX_TEXT",
+            "forkTaskInputs": "${transform-to-dynamic_ref.output.result}"
+          },
+          "type": "FORK_JOIN_DYNAMIC",
+          "decisionCases": {},
+          "dynamicForkTasksParam": "",
+          "dynamicForkTasksInputParamName": "",
+          "defaultCase": [],
+          "forkTasks": [],
+          "startDelay": 0,
+          "joinOn": [],
+          "optional": false,
+          "defaultExclusiveJoinTask": [],
+          "asyncComplete": false,
+          "loopOver": [],
+          "onStateChange": {},
+          "permissive": false
+        },
+        {
+          "name": "join",
+          "taskReferenceName": "join_ref",
+          "inputParameters": {},
+          "type": "JOIN",
+          "decisionCases": {},
+          "defaultCase": [],
+          "forkTasks": [],
+          "startDelay": 0,
+          "joinOn": [],
+          "optional": false,
+          "defaultExclusiveJoinTask": [],
+          "asyncComplete": false,
+          "loopOver": [],
+          "onStateChange": {},
+          "permissive": false
+        }
+      ],
+      "evaluatorType": "graaljs",
+      "onStateChange": {},
+      "permissive": false
+    }
+  ],
+  "inputParameters": [
+    "offset"
+  ],
+  "outputParameters": {},
+  "failureWorkflow": "",
+  "schemaVersion": 2,
+  "restartable": true,
+  "workflowStatusListenerEnabled": false,
+  "ownerEmail": "anuja.singh@nextdc.com",
+  "timeoutPolicy": "ALERT_ONLY",
+  "timeoutSeconds": 0,
+  "variables": {},
+  "inputTemplate": {},
+  "enforceSchema": true
+}
