@@ -1,0 +1,78 @@
+{
+  "createTime": 1731454726531,
+  "updateTime": 1731553183924,
+  "name": "news-context-search",
+  "description": "Search LLM given context of Indexed Data",
+  "version": 1,
+  "tasks": [
+    {
+      "name": "search_news_index",
+      "taskReferenceName": "search_news_index_ref",
+      "inputParameters": {
+        "vectorDB": "pinecone",
+        "index": "news-small",
+        "namespace": "news-small",
+        "embeddingModelProvider": "openai",
+        "embeddingModel": "text-embedding-3-small",
+        "query": "${workflow.input.query}"
+      },
+      "type": "LLM_SEARCH_INDEX",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "onStateChange": {},
+      "cacheConfig": {
+        "key": "${query}",
+        "ttlInSecond": 60
+      },
+      "permissive": false
+    },
+    {
+      "name": "get-contextual-answer",
+      "taskReferenceName": "get-contextual-answer_olu_ref",
+      "inputParameters": {
+        "llmProvider": "openai",
+        "model": "gpt-4o-mini",
+        "promptName": "news-prompt",
+        "promptVariables": {
+          "question": "${workflow.input.query}",
+          "context": "${search_news_index_ref.output.result}"
+        },
+        "temperature": 0,
+        "topP": 0
+      },
+      "type": "LLM_TEXT_COMPLETE",
+      "decisionCases": {},
+      "defaultCase": [],
+      "forkTasks": [],
+      "startDelay": 0,
+      "joinOn": [],
+      "optional": false,
+      "defaultExclusiveJoinTask": [],
+      "asyncComplete": false,
+      "loopOver": [],
+      "onStateChange": {},
+      "permissive": false
+    }
+  ],
+  "inputParameters": [
+    "query"
+  ],
+  "outputParameters": {},
+  "failureWorkflow": "",
+  "schemaVersion": 2,
+  "restartable": true,
+  "workflowStatusListenerEnabled": false,
+  "ownerEmail": "anuja.singh@nextdc.com",
+  "timeoutPolicy": "ALERT_ONLY",
+  "timeoutSeconds": 0,
+  "variables": {},
+  "inputTemplate": {},
+  "enforceSchema": true
+}
